@@ -1,0 +1,68 @@
+{
+  "name": "break-glass-exception",
+  "platform": "cross-platform",
+  "version": "1.0.0",
+  "description": "Time-bound break-glass exception policy allowing temporary access during critical incidents while maintaining auditability and risk controls.",
+  "metadata": {
+    "owner": "endpoint-engineering",
+    "approver_groups": ["infosec", "sre"],
+    "change_ticket_required": true,
+    "risk_level": "critical",
+    "rollout_strategy": "manual-only",
+    "emergency_use_only": true,
+    "review_required_post_use": true,
+    "compliance_frameworks": {
+      "NIST": ["AC-2", "AC-6", "IR-4"],
+      "SOC2": ["CC6.2", "CC7.3"],
+      "ISO27001": ["A.5.30", "A.8.2"]
+    }
+  },
+  "scope": {
+    "eligible_identities": [
+      "breakglass-admin-1",
+      "breakglass-admin-2"
+    ],
+    "eligible_devices": [
+      "forensics-laptop-*",
+      "ir-response-*"
+    ],
+    "excluded_actions": [
+      "disable_logging",
+      "disable_edr",
+      "disable_disk_encryption"
+    ]
+  },
+  "settings": {
+    "access": {
+      "conditional_access_bypass": true,
+      "require_strong_authentication": true,
+      "allowed_auth_factors": ["hardware_fido2", "certificate"],
+      "require_known_device": true
+    },
+    "endpoint_controls": {
+      "allow_non_compliant_device": true,
+      "allow_outdated_os": true,
+      "allow_edr_degraded": false
+    },
+    "network_controls": {
+      "restrict_to_management_networks": true,
+      "require_vpn_or_ztna": true
+    }
+  },
+  "time_constraints": {
+    "max_duration_minutes": 120,
+    "auto_expire": true,
+    "expiration_action": "revoke_access"
+  },
+  "logging_and_audit": {
+    "log_level": "maximum",
+    "log_destinations": ["siem", "audit-store"],
+    "require_reason_code": true,
+    "require_ticket_reference": true
+  },
+  "post_incident_requirements": {
+    "mandatory_review_within_hours": 24,
+    "require_root_cause_analysis": true,
+    "require_policy_removal_confirmation": true
+  }
+}
