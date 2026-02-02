@@ -1,0 +1,39 @@
+---
+- name: macOS baseline (canary-friendly)
+  hosts: "{{ target_ring | default('qa') }}"
+  gather_facts: false
+
+  tasks:
+    - name: Ensure Application Firewall is enabled
+      command: /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+      register: fw_state
+      changed_when: false
+
+    - name: Enable Application Firewall if disabled
+      command: /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+      when: "'disabled' in fw_state.stdout | lower"
+
+    - name: Check FileVault status
+      command: fdesetup status
+      register: fv_status
+      changed_when: false
+
+    - name: Fail if FileVault is not enabled (gate)
+      fail:
+        msg: "FileVault is not enabled on this host. Block promotion."
+      when: "'filevault is on' not in fv_status.stdout | lower"
+
+    - name: Verify Jamf binary present
+      stat:
+        path: /usr/local/bin/jamf
+      register: jamf_bin
+
+    - name: Fail if Jamf binary missing (gate)
+      fail:
+        msg: "Jamf binary missing; device likely not managed. Block promotion."
+      when: not jamf_bin.stat.exists
+
+    - name: Force Jamf check-in (useful during staged rollout)
+      command: /usr/local/bin/jamf policy
+      register: jamf_policy
+      changed_when: false
