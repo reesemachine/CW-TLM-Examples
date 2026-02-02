@@ -1,0 +1,8 @@
+# Lint
+python tools/policy_lint.py endpoint-config/policies
+
+# Drift check (this WILL show drift for macOS + extra policy)
+python tools/drift_check.py --desired endpoint-config/policies --actual endpoint-config/actual_snapshot.example.json
+
+# Apply to QA ring (break-glass will be skipped by design)
+ENDPOINT_API_TOKEN=demo python tools/apply_config.py --ring qa --policies endpoint-config/policies --change-id CHG-1234
