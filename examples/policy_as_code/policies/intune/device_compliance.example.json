@@ -1,0 +1,25 @@
+{
+  "name": "compliance-windows-baseline",
+  "platform": "windows",
+  "metadata": {
+    "owner": "endpoint-engineering",
+    "approver_group": [
+      "infosec",
+      "endpoint-eng"
+    ],
+    "change_ticket_required": true,
+    "cis_profile": "CIS Microsoft Windows 11 Benchmark",
+    "nist_controls": [
+      "AC-2",
+      "CM-6",
+      "SI-2"
+    ]
+  },
+  "settings": {
+    "requireBitLocker": true,
+    "minOsVersion": "10.0.22621.0",
+    "passwordRequired": true,
+    "passwordMinLength": 8,
+    "firewallEnabled": true
+  }
+}
