@@ -1,6 +1,6 @@
 # CW-TLM-Examples
 
-A small, interview-friendly portfolio of endpoint engineering patterns aligned to CoreWeave’s **Endpoint Engineering Tech-Lead Manager (TLM)** role.
+Examples/portfolio of endpoint engineering patterns 
 
 > ⚠️ Safety note: these examples are **reference implementations**. They use **placeholders** for tenant IDs, secrets, and API tokens. Do **not** commit real secrets.
 
