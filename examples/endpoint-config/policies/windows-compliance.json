@@ -1,0 +1,68 @@
+{
+  "name": "windows-compliance-baseline",
+  "platform": "windows",
+  "version": "1.3.0",
+  "description": "Corporate Windows 11 compliance baseline enforcing encryption, firewall, patch level, and device trust requirements.",
+  "metadata": {
+    "owner": "endpoint-engineering",
+    "approver_groups": ["infosec", "endpoint-ops"],
+    "change_ticket_required": true,
+    "risk_level": "high",
+    "rollout_strategy": "ringed",
+    "supported_os": ["Windows 11"],
+    "compliance_frameworks": {
+      "CIS": "CIS Microsoft Windows 11 Benchmark v2.0.0",
+      "NIST": ["AC-2", "CM-6", "IA-2", "SI-2", "SC-7"],
+      "ISO27001": ["A.8.1", "A.8.9"]
+    }
+  },
+  "scope": {
+    "device_type": "corporate-owned",
+    "exclude_groups": ["BreakGlass", "Forensics"],
+    "supported_rings": ["qa", "security", "early", "global"]
+  },
+  "settings": {
+    "os": {
+      "minimum_version": "10.0.22621.0",
+      "require_automatic_updates": true,
+      "max_days_since_patch": 14
+    },
+    "encryption": {
+      "require_bitlocker": true,
+      "bitlocker_encryption_method": "XTS-AES-256",
+      "require_recovery_key_escrow": true
+    },
+    "authentication": {
+      "require_password": true,
+      "minimum_password_length": 8,
+      "password_complexity": "alphanumeric",
+      "max_password_age_days": 90,
+      "require_hello_for_business": true
+    },
+    "firewall": {
+      "enabled": true,
+      "block_inbound_by_default": true
+    },
+    "defender": {
+      "real_time_protection": true,
+      "cloud_delivered_protection": true,
+      "tamper_protection": true,
+      "minimum_engine_version": "1.1.23090.2006"
+    },
+    "device_trust": {
+      "require_secure_boot": true,
+      "require_tpm": true,
+      "minimum_tpm_version": "2.0"
+    }
+  },
+  "compliance_logic": {
+    "non_compliance_action": "conditional_access_block",
+    "grace_period_hours": 24,
+    "notify_user": true
+  },
+  "telemetry_expectations": {
+    "min_checkin_success_rate": 0.99,
+    "max_auth_failures_rate": 0.02,
+    "max_boot_failure_rate": 0.005
+  }
+}
