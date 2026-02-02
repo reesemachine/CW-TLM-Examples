@@ -1,0 +1,97 @@
+name: endpoint-staged-rollout
+
+on:
+  workflow_dispatch:
+    inputs:
+      ring:
+        description: "Target ring (qa|security|early|global)"
+        required: true
+        default: "qa"
+      change_id:
+        description: "Change ticket / CAB id (required for non-QA)"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint policy definitions
+        run: |
+          python tools/policy_lint.py endpoint-config/policies
+
+      - name: Drift check (desired vs actual snapshot)
+        run: |
+          python tools/drift_check.py \
+            --desired endpoint-config/policies \
+            --actual endpoint-config/actual_snapshot.example.json
+
+  guardrails:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce change_id for higher rings
+        run: |
+          RING="${{ github.event.inputs.ring }}"
+          CHANGE="${{ github.event.inputs.change_id }}"
+          if [ "$RING" != "qa" ] && [ -z "$CHANGE" ]; then
+            echo "change_id is required for ring=$RING"
+            exit 1
+          fi
+
+  apply:
+    needs: guardrails
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.ring }}
+    # ^ Use GitHub Environments to require manual approvals for security/early/global
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Apply configs to ring
+        env:
+          # Use OIDC or encrypted secrets depending on your org policy.
+          ENDPOINT_API_TOKEN: ${{ secrets.ENDPOINT_API_TOKEN }}
+        run: |
+          python tools/apply_config.py \
+            --ring "${{ github.event.inputs.ring }}" \
+            --rings-file endpoint-config/rings.yml \
+            --policies endpoint-config/policies
+
+  post_checks:
+    needs: apply
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post-deploy health checks (placeholder)
+        run: |
+          echo "Run telemetry gates here:"
+          echo "- EDR agent health rate"
+          echo "- login time / device performance"
+          echo "- enrollment failures"
+          echo "- policy apply success %"
+          echo "If thresholds fail => stop promotion + rollback to last known good"
