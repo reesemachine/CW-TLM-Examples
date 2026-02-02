@@ -1,0 +1,128 @@
+name: endpoint-jamf-staged-rollout
+
+on:
+  workflow_dispatch:
+    inputs:
+      ring:
+        description: "Target ring (qa|security|early|global)"
+        required: true
+        default: "qa"
+      change_id:
+        description: "Change/CAB ticket id (required for security/early/global)"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jamf-rollout-${{ github.event.inputs.ring }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Lint policies (schema + guardrails)
+        run: |
+          python tools/policy_lint.py endpoint-config/policies
+
+      - name: Drift check (snapshot example gate)
+        run: |
+          python tools/drift_check.py \
+            --desired endpoint-config/policies \
+            --actual-snapshot endpoint-config/actual_snapshot.example.json
+
+  guardrails:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce change_id for higher rings
+        run: |
+          RING="${{ github.event.inputs.ring }}"
+          CHANGE="${{ github.event.inputs.change_id }}"
+          if [ "$RING" != "qa" ] && [ -z "$CHANGE" ]; then
+            echo "change_id is required for ring=$RING"
+            exit 1
+          fi
+
+  deploy_jamf:
+    needs: guardrails
+    runs-on: ubuntu-latest
+
+    # Create GitHub Environments: qa, security, early, global
+    # Require reviewers for security/early/global
+    environment: ${{ github.event.inputs.ring }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Apply Jamf profiles (idempotent)
+        env:
+          JAMF_URL: ${{ secrets.JAMF_URL }}
+          JAMF_USER: ${{ secrets.JAMF_USER }}
+          JAMF_PASS: ${{ secrets.JAMF_PASS }}
+        run: |
+          python tools/apply_config.py \
+            --ring "${{ github.event.inputs.ring }}" \
+            --policies endpoint-config/policies \
+            --change-id "${{ github.event.inputs.change_id }}" \
+            --audit-out out/audit_apply.json
+
+      - name: Upload audit log
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ github.run_id }}-${{ github.event.inputs.ring }}
+          path: out/audit_apply.json
+
+  gates:
+    needs: deploy_jamf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      # NOTE: This assumes your macOS hosts are reachable from GitHub Actions runners.
+      # In many real orgs you use a self-hosted runner inside corp/VPN.
+      - name: Run Ansible + Bash gates against ring cohort
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # Example: run gates on the same ring you just deployed
+          ansible-playbook -i ansible/inventory.ini ansible/run_gates.yml \
+            -e target_ring="${{ github.event.inputs.ring }}"
