@@ -1,0 +1,20 @@
+[
+  {
+    "asset_tag": "AT-0001",
+    "vendor": "Dell",
+    "model": "Latitude 7440",
+    "bios": "1.2.0"
+  },
+  {
+    "asset_tag": "AT-0002",
+    "vendor": "HP",
+    "model": "EliteBook 840 G10",
+    "bios": "1.5.2"
+  },
+  {
+    "asset_tag": "AT-0003",
+    "vendor": "Lenovo",
+    "model": "T14 Gen 4",
+    "bios": "1.1.0"
+  }
+]
