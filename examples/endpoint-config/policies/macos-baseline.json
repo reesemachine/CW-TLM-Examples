@@ -1,0 +1,67 @@
+{
+  "name": "macos-security-baseline",
+  "platform": "macos",
+  "version": "2.1.0",
+  "description": "macOS baseline enforcing FileVault, OS versioning, EDR health, and secure configuration with minimal user friction.",
+  "metadata": {
+    "owner": "endpoint-engineering",
+    "approver_groups": ["infosec", "endpoint-ops"],
+    "change_ticket_required": true,
+    "risk_level": "medium",
+    "rollout_strategy": "ringed",
+    "supported_os": ["macOS 13", "macOS 14"],
+    "compliance_frameworks": {
+      "CIS": "CIS Apple macOS 14 Sonoma Benchmark",
+      "NIST": ["CM-6", "IA-5", "SI-7"],
+      "SOC2": ["CC6.1", "CC6.7"]
+    }
+  },
+  "scope": {
+    "device_type": "corporate-owned",
+    "exclude_groups": ["Executive", "IR-Forensics"],
+    "supported_rings": ["qa", "security", "early", "global"]
+  },
+  "settings": {
+    "os": {
+      "minimum_version": "14.1",
+      "require_automatic_updates": true,
+      "max_days_since_patch": 21
+    },
+    "encryption": {
+      "require_filevault": true,
+      "require_recovery_key_escrow": true,
+      "block_login_until_encrypted": true
+    },
+    "authentication": {
+      "require_password": true,
+      "minimum_password_length": 8,
+      "password_complexity": "alphanumeric",
+      "max_password_age_days": 90
+    },
+    "system_security": {
+      "gatekeeper_enabled": true,
+      "sip_enabled": true,
+      "allow_kernel_extensions": false
+    },
+    "edr": {
+      "agent_required": true,
+      "agent_name": "Defender",
+      "minimum_agent_version": "101.24010.0005",
+      "block_if_agent_unhealthy": true
+    },
+    "privacy_controls": {
+      "screen_lock_after_minutes": 10,
+      "require_secure_screen_sharing": true
+    }
+  },
+  "compliance_logic": {
+    "non_compliance_action": "conditional_access_block",
+    "grace_period_hours": 48,
+    "notify_user": true
+  },
+  "telemetry_expectations": {
+    "min_agent_health_rate": 0.99,
+    "max_kernel_panic_rate": 0.002,
+    "min_successful_checkins": 0.985
+  }
+}
