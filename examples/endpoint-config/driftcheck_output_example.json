@@ -1,0 +1,55 @@
+{
+  "count": 2,
+  "drift": {
+    "macos-security-baseline": {
+      "status": "settings_drift",
+      "desired": {
+        "edr": {
+          "agent_name": "Defender",
+          "agent_required": true,
+          "block_if_agent_unhealthy": true
+        },
+        "encryption": {
+          "block_login_until_encrypted": true,
+          "require_filevault": true,
+          "require_recovery_key_escrow": true
+        },
+        "os": {
+          "max_days_since_patch": 21,
+          "minimum_version": "14.1",
+          "require_automatic_updates": true
+        },
+        "system_security": {
+          "gatekeeper_enabled": true,
+          "sip_enabled": true
+        }
+      },
+      "actual": {
+        "edr": {
+          "agent_name": "Defender",
+          "agent_required": true,
+          "block_if_agent_unhealthy": true
+        },
+        "encryption": {
+          "block_login_until_encrypted": true,
+          "require_filevault": true,
+          "require_recovery_key_escrow": false
+        },
+        "os": {
+          "max_days_since_patch": 21,
+          "minimum_version": "14.1",
+          "require_automatic_updates": true
+        },
+        "system_security": {
+          "gatekeeper_enabled": true,
+          "sip_enabled": true
+        }
+      }
+    },
+    "legacy-unused-policy": {
+      "status": "extra_in_actual",
+      "desired": null,
+      "actual": null
+    }
+  }
+}
