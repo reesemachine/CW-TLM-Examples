@@ -1,0 +1,17 @@
+rings:
+  qa:
+    description: "IT/QA devices only"
+    max_devices: 50
+    require_approval: false
+  security:
+    description: "InfoSec & SOC endpoints"
+    max_devices: 200
+    require_approval: true
+  early:
+    description: "Early adopters across key orgs"
+    max_devices: 1000
+    require_approval: true
+  global:
+    description: "Everyone else"
+    max_devices: 50000
+    require_approval: true
