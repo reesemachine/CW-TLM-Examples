@@ -1,4 +1,4 @@
-# Story Bank (Mapped to CoreWeave TLM Requirements)
+# Story Bank (Map TLM Requirements)
 
 Each story is written as a **repeatable talk track**:
 - **Goal**
