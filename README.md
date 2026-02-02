@@ -2,7 +2,7 @@
 
 Examples/portfolio of endpoint engineering patterns 
 
-> ⚠️ Safety note: these examples are **reference implementations**. They use **placeholders** for tenant IDs, secrets, and API tokens. Do **not** commit real secrets.
+> ⚠️ note: these examples are **reference implementations only**. Using **placeholders** for tenant IDs, secrets, and API tokens.
 
 ## What’s inside
 
@@ -22,8 +22,8 @@ python tools/drift_check.py --help
 
 ## Repo layout
 
-- `docs/` – interview cheat sheet + story bank
-- `examples/` – code examples (each is self-contained)
+- `docs/` –  story bank
+- `examples/` – code examples (self-contained)
 - `tools/` – reusable utilities (drift check, policy linting, report generation)
 - `.github/workflows/` – CI examples (lint, unit tests, staged release)
 
